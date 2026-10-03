@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Meine freien Zeiten – Salah</title>
+<meta name="theme-color" content="#23432a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Freie Zeiten">
+<link rel="icon" href="img/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+:root{
+  --paper:#f4f7ef;--paper-2:#e8efdd;--ink:#16241a;--ink-soft:#4a5a4d;
+  --hedge:#23432a;--hedge-deep:#172e1c;--moss:#5c8a2c;--pollen:#e8d548;
+  --line:#cfdac3;--free:#2e7d32;--free-bg:#dff3d6;--danger:#a3361a;
+  --display:"Bricolage Grotesque",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--body);font-size:17px;line-height:1.5;color:var(--ink);background:var(--paper);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--pollen);outline-offset:2px;border-radius:8px}
+h1,h2{font-family:var(--display);letter-spacing:-.02em;line-height:1.1}
+.wrap{max-width:640px;margin:0 auto;padding:0 16px}
+[hidden]{display:none!important}
+
+/* Login */
+.login{min-height:100svh;display:grid;place-items:center;padding:24px 16px}
+.login-box{width:100%;max-width:380px;text-align:center}
+.login-box img{width:96px;height:96px;border-radius:50%;object-fit:cover;margin:0 auto 18px;box-shadow:0 0 0 4px var(--pollen)}
+.login h1{font-size:2rem;color:var(--hedge);margin-bottom:6px}
+.login p{color:var(--ink-soft);margin-bottom:24px}
+.pin{width:100%;height:64px;border-radius:16px;border:2px solid var(--line);background:#fff;text-align:center;font-family:var(--display);font-size:1.8rem;letter-spacing:.4em;padding-left:.4em}
+.pin:focus{outline:none;border-color:var(--moss)}
+.remember{display:flex;align-items:center;justify-content:center;gap:10px;margin:16px 0 20px;color:var(--ink-soft)}
+.remember input{width:22px;height:22px;accent-color:var(--hedge)}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:56px;border:0;border-radius:16px;background:var(--hedge);color:#fff;font-weight:700;font-size:1.1rem;cursor:pointer}
+.btn:active{transform:scale(.98)}
+.btn[disabled]{opacity:.6}
+.err{color:var(--danger);font-weight:700;margin-top:14px;min-height:1.5em}
+
+/* App */
+.bar{position:sticky;top:0;z-index:10;background:var(--hedge);color:#fff;padding:calc(12px + env(safe-area-inset-top)) 0 12px}
+.bar .wrap{display:flex;align-items:center;gap:12px}
+.bar img{width:42px;height:42px;border-radius:50%;object-fit:cover;flex-shrink:0}
+.bar h1{font-size:1.25rem;flex:1}
+.bar h1 small{display:block;font-family:var(--body);font-weight:400;font-size:.85rem;opacity:.8;letter-spacing:0}
+.status{font-size:.85rem;font-weight:700;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.12);white-space:nowrap}
+.status.ok::before{content:"✓ "}
+.status.err{background:var(--danger)}
+.demo{background:var(--pollen);color:var(--hedge-deep);font-size:.92rem;padding:10px 0;font-weight:700}
+.help{padding:18px 0 6px;color:var(--ink-soft);font-size:.98rem}
+.help b{color:var(--free)}
+.legend{display:flex;gap:14px;margin-top:8px;font-size:.9rem}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend i{width:16px;height:16px;border-radius:5px;border:2px solid var(--line);background:#fff}
+.legend i.f{background:var(--free);border-color:var(--free)}
+
+.week{margin-top:22px}
+.week-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.week-head h2{font-size:1.35rem;color:var(--hedge)}
+.week-actions{display:flex;gap:6px}
+.mini{border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:7px 10px;font-size:.85rem;font-weight:700;cursor:pointer;white-space:nowrap}
+.mini:active{background:var(--paper-2)}
+
+.day{background:#fff;border-radius:18px;padding:12px;margin-bottom:10px;border:1px solid var(--line)}
+.day-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.day-name{font-weight:700;font-size:1.05rem}
+.day-name small{color:var(--ink-soft);font-weight:400;margin-left:6px}
+.day-all{border:0;background:none;color:var(--hedge);font-weight:700;font-size:.9rem;text-decoration:underline;cursor:pointer;padding:4px}
+.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.slots.sat{grid-template-columns:repeat(2,1fr)}
+.slot{min-height:64px;border-radius:12px;border:2px solid var(--line);background:var(--paper);cursor:pointer;padding:6px 4px;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:background .12s,border-color .12s}
+.slot b{font-size:.95rem}
+.slot span{font-size:.75rem;color:var(--ink-soft)}
+.slot[aria-pressed="true"]{background:var(--free);border-color:var(--free);color:#fff}
+.slot[aria-pressed="true"] span{color:#d7f0cf}
+.slot[aria-pressed="true"] b::before{content:"✓ "}
+.day.sunday{background:transparent;border-style:dashed;color:var(--ink-soft);padding:10px 12px}
+.day.sunday .day-top{margin:0}
+@media (max-width:420px){
+  .slots{grid-template-columns:repeat(2,1fr)}
+  .week-head{flex-wrap:wrap}
+}
+.foot{padding:28px 0 calc(40px + env(safe-area-inset-bottom));display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:.95rem}
+.foot a,.foot button{color:var(--hedge);font-weight:700;background:none;border:0;text-decoration:underline;cursor:pointer}
+.retry{margin-top:12px}
+</style>
+</head>
+<body>
+
+<!-- Anmeldung -->
+<section class="login" id="login" hidden>
+  <form class="login-box" id="loginForm">
+    <img src="img/salah-avatar.webp" alt="">
+    <h1>Hallo Salah</h1>
+    <p>Gib deine PIN ein, um deine freien Zeiten einzutragen.</p>
+    <label for="pin" class="sr" style="position:absolute;left:-9999px">PIN</label>
+    <input class="pin" id="pin" type="password" inputmode="numeric" autocomplete="current-password" maxlength="12" required>
+    <label class="remember"><input type="checkbox" id="remember" checked> Auf diesem Handy angemeldet bleiben</label>
+    <button class="btn" id="loginBtn" type="submit">Anmelden</button>
+    <p class="err" id="loginErr" role="alert"></p>
+  </form>
+</section>
+
+<!-- Kalender -->
+<div id="app" hidden>
+  <header class="bar">
+    <div class="wrap">
+      <img src="img/salah-avatar.webp" alt="">
+      <h1>Meine freien Zeiten<small>Salah Haus- &amp; Gartenservice</small></h1>
+      <span class="status ok" id="status" aria-live="polite">Gespeichert</span>
+    </div>
+  </header>
+  <div class="demo" id="demo" hidden><div class="wrap">Demo-Modus: Änderungen werden nur in diesem Browser gespeichert. Für den echten Betrieb die Einrichtung in der README machen.</div></div>
+
+  <main class="wrap">
+    <div class="help">
+      Tippe auf ein Zeitfenster, wenn du <b>frei</b> bist. Nochmal tippen macht es wieder zu. Alles wird automatisch gespeichert und erscheint sofort auf der Website.
+      <div class="legend"><span><i class="f"></i> frei, Kunden können buchen</span><span><i></i> nicht frei</span></div>
+    </div>
+    <div id="weeks"></div>
+    <div class="retry" id="retryWrap" hidden><button class="btn" id="retry">Nochmal speichern</button></div>
+  </main>
+
+  <footer class="wrap foot">
+    <a href="index.html#termin" target="_blank" rel="noopener">So sieht es auf der Website aus</a>
+    <button id="logout" type="button">Abmelden</button>
+  </footer>
+</div>
+
+<script src="config.js"></script>
+<script src="slots.js"></script>
+<script>
+const S = window.SALAH;
+const PIN_KEY = "salah-admin-pin";
+const $ = s => document.querySelector(s);
+let pin = "";
+let slots = {};
+let saveTimer = null;
+
+const WD_LONG = ["Sonntag","Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag"];
+const MON = ["Jan.","Feb.","März","Apr.","Mai","Juni","Juli","Aug.","Sep.","Okt.","Nov.","Dez."];
+
+/* ---------- Anmeldung ---------- */
+function showLogin(msg){ $('#login').hidden = false; $('#app').hidden = true; $('#loginErr').textContent = msg || ''; setTimeout(() => $('#pin').focus(), 50); }
+
+async function tryLogin(p, remember){
+  $('#loginBtn').disabled = true; $('#loginBtn').textContent = 'Prüfe …';
+  const r = await S.checkPin(p);
+  $('#loginBtn').disabled = false; $('#loginBtn').textContent = 'Anmelden';
+  if (!r.ok) {
+    localStorage.removeItem(PIN_KEY);
+    const msgs = { pin:'Die PIN stimmt nicht.', locked:'Zu viele falsche Versuche. Bitte in 15 Minuten nochmal.', network:'Keine Verbindung. Bitte Internet prüfen.' };
+    showLogin(msgs[r.error] || 'Anmelden hat nicht geklappt.');
+    return;
+  }
+  pin = p;
+  if (remember) { try { localStorage.setItem(PIN_KEY, p); } catch {} }
+  slots = r.slots || (await S.load()) || {};
+  $('#login').hidden = true; $('#app').hidden = false;
+  render();
+}
+
+$('#loginForm').addEventListener('submit', e => { e.preventDefault(); tryLogin($('#pin').value.trim(), $('#remember').checked); });
+$('#logout').addEventListener('click', () => { localStorage.removeItem(PIN_KEY); pin = ''; $('#pin').value = ''; showLogin(); });
+
+/* ---------- Kalender ---------- */
+function weekLabel(i){ return ['Diese Woche','Nächste Woche','In 2 Wochen','In 3 Wochen','In 4 Wochen','In 5 Wochen'][i] || 'Später'; }
+
+function weekIndex(dateIso){
+  // Wochen beginnen montags
+  const d = S.fromIso(dateIso), now = new Date(); now.setHours(12,0,0,0);
+  const monday = x => { const m = new Date(x); m.setDate(m.getDate() - ((m.getDay() + 6) % 7)); return m; };
+  return Math.round((monday(d) - monday(now)) / (7 * 864e5));
+}
+
+function render(){
+  const days = S.upcomingDays(S.cfg.DAYS_AHEAD || 28, 1);
+  const groups = {};
+  days.forEach(d => { const w = weekIndex(d); (groups[w] = groups[w] || []).push(d); });
+  // Wochen ohne buchbare Tage ausblenden
+  Object.keys(groups).forEach(w => { if (!groups[w].some(d => S.windowsFor(d).length)) delete groups[w]; });
+
+  $('#weeks').innerHTML = Object.keys(groups).map(w => `
+    <section class="week">
+      <div class="week-head">
+        <h2>${weekLabel(+w)}</h2>
+        <div class="week-actions">
+          <button class="mini" data-week-all="${w}">Alles frei</button>
+          <button class="mini" data-week-none="${w}">Alles leeren</button>
+        </div>
+      </div>
+      ${groups[w].map(dayHtml).join('')}
+    </section>`).join('');
+
+  $('#weeks').querySelectorAll('[data-week-all],[data-week-none]').forEach(b => {
+    b.addEventListener('click', () => {
+      const all = b.hasAttribute('data-week-all');
+      const w = all ? b.dataset.weekAll : b.dataset.weekNone;
+      groups[w].forEach(d => setDay(d, all));
+      render(); queueSave();
+    });
+  });
+}
+
+function dayHtml(d){
+  const date = S.fromIso(d), wins = S.windowsFor(d);
+  const label = `${WD_LONG[date.getDay()]}<small>${date.getDate()}. ${MON[date.getMonth()]}</small>`;
+  if (!wins.length) return `<div class="day sunday"><div class="day-top"><span class="day-name">${label}</span><span>geschlossen</span></div></div>`;
+  const on = slots[d] || [];
+  const full = on.length === wins.length;
+  return `<div class="day">
+    <div class="day-top"><span class="day-name">${label}</span>
+      <button class="day-all" onclick="toggleDay('${d}')">${full ? 'Ganzen Tag leeren' : 'Ganzer Tag frei'}</button></div>
+    <div class="slots ${wins.length === 2 ? 'sat' : ''}">
+      ${wins.map(w => `<button class="slot" aria-pressed="${on.includes(w.id)}" onclick="toggleSlot('${d}','${w.id}',this)"><b>${w.name}</b><span>${w.time}</span></button>`).join('')}
+    </div></div>`;
+}
+
+function setDay(d, free){
+  const ids = S.windowsFor(d).map(w => w.id);
+  if (free && ids.length) slots[d] = ids; else delete slots[d];
+}
+window.toggleDay = d => { const full = (slots[d] || []).length === S.windowsFor(d).length; setDay(d, !full); render(); queueSave(); };
+window.toggleSlot = (d, id, btn) => {
+  const set = new Set(slots[d] || []);
+  set.has(id) ? set.delete(id) : set.add(id);
+  if (set.size) slots[d] = [...set]; else delete slots[d];
+  btn.setAttribute('aria-pressed', set.has(id));
+  const full = set.size === S.windowsFor(d).length;
+  btn.closest('.day').querySelector('.day-all').textContent = full ? 'Ganzen Tag leeren' : 'Ganzer Tag frei';
+  queueSave();
+};
+
+/* ---------- Speichern ---------- */
+function setStatus(text, cls){ const s = $('#status'); s.textContent = text; s.className = 'status ' + (cls || ''); }
+
+function queueSave(){
+  setStatus('Speichert …');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(doSave, 700);
+}
+async function doSave(){
+  const r = await S.save(slots, pin);
+  if (r.ok) { setStatus('Gespeichert', 'ok'); $('#retryWrap').hidden = true; }
+  else if (r.error === 'pin' || r.error === 'locked') { localStorage.removeItem(PIN_KEY); showLogin('Bitte neu anmelden.'); }
+  else { setStatus('Nicht gespeichert', 'err'); $('#retryWrap').hidden = false; }
+}
+$('#retry').addEventListener('click', doSave);
+window.addEventListener('beforeunload', e => { if (saveTimer && $('#status').textContent === 'Speichert …') { e.preventDefault(); e.returnValue = ''; } });
+
+/* ---------- Start ---------- */
+if (S.mode === 'demo') $('#demo').hidden = false;
+let saved = null; try { saved = localStorage.getItem(PIN_KEY); } catch {}
+if (S.mode === 'demo') tryLogin('demo', false);
+else if (saved) tryLogin(saved, true);
+else showLogin();
+</script>
+</body>
+</html>
