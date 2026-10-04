@@ -24,5 +24,11 @@
  "2026-10-25": [
   "vormittag",
   "nachmittag"
+ ],
+ "2026-10-23": [
+  "frueh",
+  "vormittag",
+  "nachmittag",
+  "abend"
  ]
 }
