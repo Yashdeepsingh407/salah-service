@@ -2,7 +2,6 @@
    Zeitfenster, Laden und Speichern der freien Zeiten. */
 window.SALAH = (function () {
   const cfg = window.SALAH_CONFIG || {};
-  const DEMO_KEY = "salah-demo-slots";
 
   // Öffnungszeiten (0 = Sonntag)
   const HOURS = { 0: [9, 18], 1: [6, 20], 2: [6, 20], 3: [6, 20], 4: [6, 20], 5: [6, 20], 6: [9, 18] };
@@ -50,45 +49,79 @@ window.SALAH = (function () {
     return out;
   }
 
-  const mode = cfg.API_URL ? "live" : "demo";
+  const mode = "live";
+  const API = `https://api.github.com/repos/${cfg.GITHUB_OWNER}/${cfg.GITHUB_REPO}/contents/${cfg.SLOTS_FILE}`;
+  let lastSha = null;
 
-  // Lädt die freien Zeiten. Gibt null zurück, wenn (noch) nichts eingetragen ist
+  function timeoutFetch(url, opts, ms) {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), ms || 8000);
+    return fetch(url, Object.assign({}, opts, { signal: ctrl.signal })).finally(() => clearTimeout(t));
+  }
+
+  // Dekodiert Base64 aus der GitHub-API als UTF-8
+  const fromB64 = b64 => new TextDecoder().decode(Uint8Array.from(atob(b64.replace(/\s/g, "")), c => c.charCodeAt(0)));
+  const toB64 = str => btoa(String.fromCharCode(...new TextEncoder().encode(str)));
+
+  // Lädt die freien Zeiten. Gibt null zurück, wenn nichts eingetragen ist
   // oder das Laden fehlschlägt – dann zeigt die Website die normalen Öffnungszeiten.
   async function load() {
-    if (mode === "demo") {
-      try { const raw = localStorage.getItem(DEMO_KEY); return raw ? cleanSlots(JSON.parse(raw)) : null; }
-      catch { return null; }
-    }
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 8000);
+    // 1. Direkt aus GitHub (immer aktuell)
     try {
-      const res = await fetch(cfg.API_URL + "?t=" + Date.now(), { signal: ctrl.signal });
-      const data = await res.json();
-      return data && data.ok ? cleanSlots(data.slots) : null;
-    } catch { return null; }
-    finally { clearTimeout(timer); }
+      const res = await timeoutFetch(API + "?ref=" + cfg.GITHUB_BRANCH + "&t=" + Date.now(), { headers: { Accept: "application/vnd.github.raw+json" }, cache: "no-store" });
+      if (res.status === 404) return null;
+      if (res.ok) return cleanSlots(await res.json());
+    } catch {}
+    // 2. Ersatz: Kopie auf GitHub Pages (kann ein paar Minuten alt sein)
+    try {
+      const res = await timeoutFetch(cfg.SLOTS_FILE + "?t=" + Date.now(), { cache: "no-store" });
+      if (res.ok) return cleanSlots(await res.json());
+    } catch {}
+    return null;
   }
 
-  async function post(body) {
-    // text/plain verhindert einen CORS-Preflight bei Google Apps Script
-    const res = await fetch(cfg.API_URL, { method: "POST", body: JSON.stringify(body) });
-    return res.json();
+  const authHeaders = token => ({ Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" });
+
+  // Liest die Datei mit dem Schlüssel (liefert auch die Version "sha" fürs Speichern)
+  async function readWithToken(token) {
+    const res = await timeoutFetch(API + "?ref=" + cfg.GITHUB_BRANCH + "&t=" + Date.now(), { headers: authHeaders(token), cache: "no-store" });
+    if (res.status === 401) return { ok: false, error: "pin" };
+    if (res.status === 404) { lastSha = null; return { ok: true, slots: {} }; }
+    if (!res.ok) return { ok: false, error: "network" };
+    const data = await res.json();
+    lastSha = data.sha;
+    let slots = {};
+    try { slots = JSON.parse(fromB64(data.content || "")); } catch {}
+    return { ok: true, slots: cleanSlots(slots) };
   }
 
-  async function checkPin(pin) {
-    if (mode === "demo") return { ok: true };
-    try { return await post({ action: "check", pin }); }
+  async function checkPin(token) {
+    if (!token || token.length < 20) return { ok: false, error: "pin" };
+    try { return await readWithToken(token); }
     catch { return { ok: false, error: "network" }; }
   }
 
-  async function save(slots, pin) {
+  async function save(slots, token, retried) {
     const clean = cleanSlots(slots);
-    if (mode === "demo") {
-      try { localStorage.setItem(DEMO_KEY, JSON.stringify(clean)); return { ok: true, slots: clean }; }
-      catch { return { ok: false, error: "storage" }; }
-    }
-    try { return await post({ action: "save", pin, slots: clean }); }
-    catch { return { ok: false, error: "network" }; }
+    const body = {
+      message: "Freie Zeiten aktualisiert",
+      content: toB64(JSON.stringify(clean, null, 1) + "\n"),
+      branch: cfg.GITHUB_BRANCH,
+      committer: { name: "Salah Admin", email: "admin@salah-service.de" }
+    };
+    if (lastSha) body.sha = lastSha;
+    try {
+      const res = await timeoutFetch(API, { method: "PUT", headers: authHeaders(token), body: JSON.stringify(body) }, 15000);
+      if (res.ok) { lastSha = (await res.json()).content.sha; return { ok: true, slots: clean }; }
+      if (res.status === 401) return { ok: false, error: "pin" };
+      if (res.status === 403 || res.status === 404) return { ok: false, error: "forbidden" };
+      if ((res.status === 409 || res.status === 422) && !retried) {
+        // Datei wurde zwischendurch geändert (z. B. auf einem anderen Gerät): Version neu holen und nochmal
+        const r = await readWithToken(token);
+        if (r.ok) return save(slots, token, true);
+      }
+      return { ok: false, error: "network" };
+    } catch { return { ok: false, error: "network" }; }
   }
 
   return { cfg, mode, HOURS, WINDOWS, windowsFor, upcomingDays, iso, fromIso, pad, load, save, checkPin };

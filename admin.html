@@ -34,7 +34,7 @@ h1,h2{font-family:var(--display);letter-spacing:-.02em;line-height:1.1}
 .login-box img{width:96px;height:96px;border-radius:50%;object-fit:cover;margin:0 auto 18px;box-shadow:0 0 0 4px var(--pollen)}
 .login h1{font-size:2rem;color:var(--hedge);margin-bottom:6px}
 .login p{color:var(--ink-soft);margin-bottom:24px}
-.pin{width:100%;height:64px;border-radius:16px;border:2px solid var(--line);background:#fff;text-align:center;font-family:var(--display);font-size:1.8rem;letter-spacing:.4em;padding-left:.4em}
+.pin{width:100%;height:60px;border-radius:16px;border:2px solid var(--line);background:#fff;text-align:center;font-size:16px;padding:0 14px}
 .pin:focus{outline:none;border-color:var(--moss)}
 .remember{display:flex;align-items:center;justify-content:center;gap:10px;margin:16px 0 20px;color:var(--ink-soft)}
 .remember input{width:22px;height:22px;accent-color:var(--hedge)}
@@ -98,9 +98,9 @@ h1,h2{font-family:var(--display);letter-spacing:-.02em;line-height:1.1}
   <form class="login-box" id="loginForm">
     <img src="img/salah-avatar.webp" alt="">
     <h1>Hallo Salah</h1>
-    <p>Gib deine PIN ein, um deine freien Zeiten einzutragen.</p>
-    <label for="pin" class="sr" style="position:absolute;left:-9999px">PIN</label>
-    <input class="pin" id="pin" type="password" inputmode="numeric" autocomplete="current-password" maxlength="12" required>
+    <p>Füge einmalig deinen Zugangsschlüssel ein. Danach bleibst du auf diesem Handy angemeldet.</p>
+    <label for="pin" class="sr" style="position:absolute;left:-9999px">Zugangsschlüssel</label>
+    <input class="pin" id="pin" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="github_pat_…" required>
     <label class="remember"><input type="checkbox" id="remember" checked> Auf diesem Handy angemeldet bleiben</label>
     <button class="btn" id="loginBtn" type="submit">Anmelden</button>
     <p class="err" id="loginErr" role="alert"></p>
@@ -116,7 +116,6 @@ h1,h2{font-family:var(--display);letter-spacing:-.02em;line-height:1.1}
       <span class="status ok" id="status" aria-live="polite">Gespeichert</span>
     </div>
   </header>
-  <div class="demo" id="demo" hidden><div class="wrap">Demo-Modus: Änderungen werden nur in diesem Browser gespeichert. Für den echten Betrieb die Einrichtung in der README machen.</div></div>
 
   <main class="wrap">
     <div class="help">
@@ -137,7 +136,9 @@ h1,h2{font-family:var(--display);letter-spacing:-.02em;line-height:1.1}
 <script src="slots.js"></script>
 <script>
 const S = window.SALAH;
-const PIN_KEY = "salah-admin-pin";
+const PIN_KEY = "salah-admin-token";
+let alerted = false;
+function alertOnce(m){ if (!alerted) { alerted = true; const p = document.createElement('p'); p.className = 'err'; p.textContent = m; $('#retryWrap').prepend(p); } }
 const $ = s => document.querySelector(s);
 let pin = "";
 let slots = {};
@@ -155,7 +156,7 @@ async function tryLogin(p, remember){
   $('#loginBtn').disabled = false; $('#loginBtn').textContent = 'Anmelden';
   if (!r.ok) {
     localStorage.removeItem(PIN_KEY);
-    const msgs = { pin:'Die PIN stimmt nicht.', locked:'Zu viele falsche Versuche. Bitte in 15 Minuten nochmal.', network:'Keine Verbindung. Bitte Internet prüfen.' };
+    const msgs = { pin:'Der Zugangsschlüssel stimmt nicht oder ist abgelaufen.', network:'Keine Verbindung. Bitte Internet prüfen.' };
     showLogin(msgs[r.error] || 'Anmelden hat nicht geklappt.');
     return;
   }
@@ -243,22 +244,21 @@ function setStatus(text, cls){ const s = $('#status'); s.textContent = text; s.c
 function queueSave(){
   setStatus('Speichert …');
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(doSave, 700);
+  saveTimer = setTimeout(doSave, 1500);
 }
 async function doSave(){
   const r = await S.save(slots, pin);
   if (r.ok) { setStatus('Gespeichert', 'ok'); $('#retryWrap').hidden = true; }
-  else if (r.error === 'pin' || r.error === 'locked') { localStorage.removeItem(PIN_KEY); showLogin('Bitte neu anmelden.'); }
+  else if (r.error === 'pin') { localStorage.removeItem(PIN_KEY); showLogin('Der Zugangsschlüssel ist ungültig oder abgelaufen. Bitte neuen Schlüssel einfügen.'); }
+  else if (r.error === 'forbidden') { setStatus('Keine Schreibrechte', 'err'); $('#retryWrap').hidden = false; alertOnce('Der Zugangsschlüssel darf nicht speichern. Er braucht die Berechtigung „Contents: Read and write“ für salah-service.'); }
   else { setStatus('Nicht gespeichert', 'err'); $('#retryWrap').hidden = false; }
 }
 $('#retry').addEventListener('click', doSave);
 window.addEventListener('beforeunload', e => { if (saveTimer && $('#status').textContent === 'Speichert …') { e.preventDefault(); e.returnValue = ''; } });
 
 /* ---------- Start ---------- */
-if (S.mode === 'demo') $('#demo').hidden = false;
 let saved = null; try { saved = localStorage.getItem(PIN_KEY); } catch {}
-if (S.mode === 'demo') tryLogin('demo', false);
-else if (saved) tryLogin(saved, true);
+if (saved) tryLogin(saved, true);
 else showLogin();
 </script>
 </body>
