@@ -40,5 +40,19 @@
   "vormittag",
   "nachmittag",
   "abend"
+ ],
+ "2026-11-06": [
+  "frueh",
+  "vormittag",
+  "nachmittag",
+  "abend"
+ ],
+ "2026-11-07": [
+  "vormittag",
+  "nachmittag"
+ ],
+ "2026-11-08": [
+  "vormittag",
+  "nachmittag"
  ]
 }
